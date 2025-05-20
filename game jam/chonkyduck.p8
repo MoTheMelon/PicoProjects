@@ -65,11 +65,7 @@ end
 
 function draw_chonky_duck()
     local chonk = 132
-    if quack then
-        chonk = 130
-    else
-        chonk = 128
-    end
+    if quack then chonk = 130 else chonk = 128 end
     spr(chonk,3*8,8,2,2)
 end
 
@@ -197,13 +193,9 @@ function cam_follow()
     local target_x = x - 60  
     local target_y = y - 60
 
-    if x < 60 then
-        target_x = 0 
-    end
-    if y < 60 then
-        target_y = 0
-    end
-
+    if x < 60 then target_x = 0 end
+    if y < 60 then target_y = 0 end
+        
     cam_x += (target_x - cam_x) * 0.2
     cam_y += (target_y - cam_y) * 0.2
     camera(flr(cam_x),flr(cam_y))
@@ -217,29 +209,16 @@ function switch_fishing()
 end
 
 function fishing_movement()
-    if btn(⬆️) and fishing_y > -11*8 then
-        fishing_y -= 3
-    end
-    if btn(⬇️) and fishing_y < 0 then
-        fishing_y += 3
-    end
+    if btn(⬆️) and fishing_y > -11*8 then fishing_y -= 3 end
+    if btn(⬇️) and fishing_y < 0 then fishing_y += 3 end
 
-
-    if btnp(⬆️) and fishing_y - 3 < -11*8 then
-        sfx(04)
-    end
-    if btnp(⬇️) and fishing_y + 3 > 0 then
-        sfx(04)
-    end
-    
-
+    if btnp(⬆️) and fishing_y - 3 < -11*8 then sfx(04) end
+    if btnp(⬇️) and fishing_y + 3 > 0 then sfx(04) end
 end
  
 function in_water()
     local px = x+4
-    if face_left then 
-        px = x+12
-    end
+    if face_left then px = x+12 end
     local tile = mget(flr((px)/8),flr((y+7)/8))
     return fget(tile,0)
 end
