@@ -8,6 +8,8 @@ function _init()
     bx = 0
     by = 0
 
+    b_spd = 6
+
     game_mode = "playing"
 
     duck_run = {1,3,5,3}
@@ -136,8 +138,10 @@ function draw_bullet()
             bx = x + 16
             by = y + 5
         else
-
+            bx = x -5
+            by = y + 5
         end
+        b_dir = face_left
     else
         if not gun_firing then
             bx = 0
@@ -146,9 +150,9 @@ function draw_bullet()
     end
     print(bx)
 
-    if bx ~= 0 and (bx < 128 or bx > 0) then
+    if bx ~= 0 and (bx < x + 64 and bx > x-64) then
         rectfill(bx, by, bx, by, 7)
-        bx += 1
+        if not b_dir then bx += b_spd else bx -= b_spd end
     end
 end
 
@@ -168,7 +172,11 @@ function draw_gun_anim()
                 i += 1
             end
             if i <= #gun_frames then
-                spr(gun_frames[i],x+13,y+2)
+                if not face_left then
+                    spr(gun_frames[i],x+13,y+2)
+                else
+                    spr(gun_frames[i],x-5,y+2,1,1,face_left)
+                end
             else
                 start_anim = false
             end
