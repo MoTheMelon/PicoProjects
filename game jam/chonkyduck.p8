@@ -18,20 +18,28 @@ function _init()
     orange_fish = 13
     red_fish = 14
 
-    enemies = {
-        {sprite = blue_fish,
-        x = 100,
-        y = 100,
-        alive = true
-        },
-        {sprite = orange_fish,
-        x = 100,
-        y = 200,
-        alive = true
-        },
-    }
+    enemies = {}
 
-    
+    create_enemy(100,100,"blue")
+    create_enemy(100,50,"orange")
+    create_enemy(80,80,"red")
+
+    -- enemies = {
+    --     {sprite = blue_fish,
+    --     x = 100,
+    --     y = 100,
+    --     alive = true,
+    --     collected = false
+    --     },
+    --     {sprite = orange_fish,
+    --     x = 100,
+    --     y = 200,
+    --     alive = true,
+    --     collected = false
+    --     }
+    -- }
+
+    picked_up_fish = {}
 
     duck_run = {1,3,5,3}
     duck_run_spd = 0.2
@@ -94,6 +102,7 @@ function _update()
             check_fired_gun()
             --switch_fishing()
             get_collided_enemy()
+            collect_enemies()
         end
     end
     
@@ -119,10 +128,74 @@ function _draw()
             draw_reload()
             cam_follow()
             draw_chonky_duck()
+            draw_picked_up_fish()
         end
     end
 
     
+end
+
+function create_enemy(x,y,color)
+    local sprite = nil
+    if color == "blue" then sprite = blue_fish end
+    if color == "green" then sprite = green_fish end
+    if color == "orange" then sprite = orange_fish end
+    if color == "red" then sprite = red_fish end
+    local i = #enemies+1
+    
+    
+    local enemy = {
+        sprite = sprite,
+        x = x,
+        y = y,
+        alive = true,
+        collected = false
+    }
+    enemies[#enemies + 1] = enemy
+end
+
+function collect_enemies()
+    for i = 1, #enemies do 
+        local enemy = enemies[i]
+        if enemy ~= nil then 
+            if not enemy.alive and is_in_range(enemy,16) and not enemy.collected then
+                enemy.x -= 1
+                if is_in_range(enemy, 6) then
+                    enemy.collected = true
+                end
+            end
+
+            if enemy.collected then
+                add_to_picked_up(enemy)
+                del(enemies,enemy)
+            end
+        end
+    end
+end
+
+function add_to_picked_up(fish)
+    local i = #picked_up_fish + 1
+    picked_up_fish[i] = fish
+end
+
+function draw_picked_up_fish()
+    for i = 1, #picked_up_fish do
+        local fish = picked_up_fish[i]
+        fish.x = cam_x + 10*i
+        fish.y = cam_y + 3
+        spr(fish.sprite,fish.x,fish.y)
+    end
+    print(#picked_up_fish,cam_x + 5,cam_y + 5)
+end
+
+function is_in_range(enemy,radius)
+    --centered on enemy sprite
+    local ex = enemy.x + 4
+    local ey = enemy.y + 4
+    local dx = (x+4) - ex
+    local dy = (y+4) - ey
+
+    return (dx * dx + dy * dy) < (radius * radius)
 end
 
 function draw_enemies()
@@ -131,13 +204,17 @@ function draw_enemies()
     
     for i = 1, #enemies do 
         local enemy = enemies[i]
-        if enemy.alive then
-            spr(enemy.sprite,enemy.x,enemy.y)
+        if not enemy.alive then
+            if enemy.collected then
+                --spr(enemy.sprite,enemy.x,enemy.y)
+            else
+                spr(enemy.sprite,enemy.x,enemy.y - dead_y)
+            end
         else 
-            spr(enemy.sprite,enemy.x,enemy.y - dead_y)
+            spr(enemy.sprite,enemy.x,enemy.y)
         end
     end
-    tick += 0.05
+    tick += 0.02
 end
 
 function get_collided_enemy()
@@ -199,7 +276,6 @@ function draw_bullet()
             by = 0
         end
     end
-    print(bx)
 
     if bx ~= 0 and (bx < x + 64 and bx > x-64) then
         rectfill(bx, by, bx, by, 7)
