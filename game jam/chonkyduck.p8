@@ -10,7 +10,28 @@ function _init()
 
     b_spd = 6
 
+    tick = 0 
     game_mode = "playing"
+
+    blue_fish = 11
+    green_fish = 12
+    orange_fish = 13
+    red_fish = 14
+
+    enemies = {
+        {sprite = blue_fish,
+        x = 100,
+        y = 100,
+        alive = true
+        },
+        {sprite = orange_fish,
+        x = 100,
+        y = 200,
+        alive = true
+        },
+    }
+
+    
 
     duck_run = {1,3,5,3}
     duck_run_spd = 0.2
@@ -72,6 +93,7 @@ function _update()
             check_quack()
             check_fired_gun()
             --switch_fishing()
+            get_collided_enemy()
         end
     end
     
@@ -90,6 +112,7 @@ function _draw()
             draw_duck_fishing(118*8,fishing_y)
         else
             draw_duck(x,y)
+            draw_enemies()
             draw_player_gun()
             draw_gun_anim()
             draw_bullet()
@@ -100,6 +123,34 @@ function _draw()
     end
 
     
+end
+
+function draw_enemies()
+    
+    local dead_y = flr(8*abs(sin(tick)))
+    
+    for i = 1, #enemies do 
+        local enemy = enemies[i]
+        if enemy.alive then
+            spr(enemy.sprite,enemy.x,enemy.y)
+        else 
+            spr(enemy.sprite,enemy.x,enemy.y - dead_y)
+        end
+    end
+    tick += 0.05
+end
+
+function get_collided_enemy()
+    for i = 1, #enemies do
+        local ex = enemies[i].x
+        local ey = enemies [i].y
+        if bx >= ex and bx <= ex+8 and by >= ey and by <= ey+8 then
+            enemies[i].alive = false
+            --return enemies[i]
+        else
+            --return nil
+        end
+    end
 end
 
 function check_fired_gun()
