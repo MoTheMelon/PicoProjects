@@ -24,22 +24,9 @@ function _init()
     create_enemy(100,50,"orange")
     create_enemy(80,80,"red")
 
-    -- enemies = {
-    --     {sprite = blue_fish,
-    --     x = 100,
-    --     y = 100,
-    --     alive = true,
-    --     collected = false
-    --     },
-    --     {sprite = orange_fish,
-    --     x = 100,
-    --     y = 200,
-    --     alive = true,
-    --     collected = false
-    --     }
-    -- }
-
     picked_up_fish = {}
+
+    debug_lines = {}
 
     duck_run = {1,3,5,3}
     duck_run_spd = 0.2
@@ -112,7 +99,7 @@ end
 function _draw()
     cls()
     map()
-
+    show_debug()
     if game_mode == "title" then
         draw_title_screen()
     else
@@ -133,6 +120,20 @@ function _draw()
     end
 
     
+end
+
+function show_debug()
+    for i = 1, #debug_lines do
+        print(debug_lines[i], cam_x + 5, cam_y + (i-1)*8, 14)
+    end
+end
+
+function add_debug_line(str)
+    local i = #debug_lines + 1
+    for i = 1, #debug_lines do
+        if debug_lines[i] ~= str then debug_lines[i] = str end
+    end
+    if #debug_lines == 0 then debug_lines[i] = str end
 end
 
 function create_enemy(x,y,color)
@@ -185,7 +186,7 @@ function draw_picked_up_fish()
         fish.y = cam_y + 3
         spr(fish.sprite,fish.x,fish.y)
     end
-    print(#picked_up_fish,cam_x + 5,cam_y + 5)
+    add_debug_line("#fish " .. #picked_up_fish)
 end
 
 function is_in_range(enemy,radius)
