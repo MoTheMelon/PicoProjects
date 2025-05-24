@@ -81,13 +81,11 @@ function _update()
     else
         if btnp(5) then game_mode = "title" end
         if fishing then
-            --switch_fishing()
             fishing_movement()
         else
             player_move()
             check_quack()
             check_fired_gun()
-            --switch_fishing()
             get_collided_enemy()
             collect_enemies()
         end
@@ -119,7 +117,6 @@ function _draw()
         end
     end
 
-    
 end
 
 function show_debug()
