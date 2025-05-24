@@ -28,6 +28,17 @@ function _init()
         x = 20,
         y = 20
     }
+
+    gun = {
+        x = 64,
+        y = 64,
+        sprite_id = 18, 
+        triggered = false,
+        recoil_x = 0,
+        recoil_timer = 0,
+        recoil_max = 5
+    }
+    
     -- init dialogue system
     dialogue = {
         active = false,
@@ -120,6 +131,9 @@ function _update()
             start_dialogue("greetings, child... the pondfather watches.")
         end
     end
+
+    update_gun()
+
 end
 
 function _draw()
@@ -207,10 +221,10 @@ end
 function draw_dialogue()
     if dialogue.active then
         -- textbox background
-        rectfill(4, dialogue.box_y, 123, dialogue.box_y + 23, 0)
-        rect(4, dialogue.box_y, 123, dialogue.box_y + 23, 7)
+        rectfill(cam_x + 4, cam_y + dialogue.box_y, cam_x + 123, cam_y + dialogue.box_y + 23, 0)
+        rect(cam_x + 4, cam_y + dialogue.box_y, cam_x + 123, cam_y + dialogue.box_y + 23, 7)
         -- text
-        print(dialogue.shown, 8, dialogue.box_y + 6, 7)
+        print(dialogue.shown, cam_x + 8, cam_y + dialogue.box_y + 6, 7)
     end
 end
 function wrap_text(txt, limit)
@@ -227,10 +241,6 @@ function wrap_text(txt, limit)
     out ..= line
     return out
 end
-
-
-
-
 
 
 
@@ -273,8 +283,8 @@ function collect_enemies()
         local enemy = enemies[i]
         if enemy ~= nil then 
             if not enemy.alive and is_in_range(enemy,16) and not enemy.collected then
-                enemy.x -= 1
-                if is_in_range(enemy, 6) then
+                move_toward_player(enemy)
+                if is_in_range(enemy, 1) then
                     enemy.collected = true
                 end
             end
@@ -284,6 +294,18 @@ function collect_enemies()
                 del(enemies,enemy)
             end
         end
+    end
+end
+
+function move_toward_player(e)
+    local dx = x - e.x
+    local dy = y - e.y
+    local dist = sqrt(dx*dx + dy*dy)
+
+    if dist > 0 then
+        local speed = 1.5 
+        e.x += dx / dist * speed
+        e.y += dy / dist * speed
     end
 end
 
@@ -349,6 +371,14 @@ function check_fired_gun()
         gun_firing = true
         gun_triggered = true
         gun_timer = shot_duration
+        local strength = 2
+        if face_left then
+            gun.recoil_x = strength 
+        else
+            gun.recoil_x = -strength 
+        end
+
+        gun.recoil_timer = gun.recoil_max
         sfx(07)
     else
         gun_triggered = false
@@ -356,6 +386,20 @@ function check_fired_gun()
 
     if gun_firing then gun_timer -= 1 end
     if gun_timer <= 0 then gun_firing = false end
+end
+
+
+
+function update_gun()
+    if gun.recoil_timer > 0 then
+        gun.recoil_timer -= 1
+        gun.recoil_x *= 0.7
+
+        if gun.recoil_timer <= 0 then
+            gun.recoil_x = 0
+            --gun.triggered = false
+        end
+    end
 end
 
 function draw_reload()
@@ -653,10 +697,13 @@ function sign_rect(x, y, w, h, col1, col2)
 end
 
 function draw_player_gun()
+    gun.y = y + 4
     if not face_left then
-        sspr(18,96,10,6,x+5,y+4)
+        if not gun_firing then gun.x = x + 5 end
+        sspr(gun.sprite_id,96,10,6,gun.x,gun.y)
     else
-        sspr(18,96,10,6,x+1,y+4,10,6,face_left)
+        if not gun_firing then gun.x = x + 1 end
+        sspr(gun.sprite_id,96,10,6,gun.x,gun.y,10,6,face_left)
     end
 
 end
