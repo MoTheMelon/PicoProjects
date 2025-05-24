@@ -372,7 +372,7 @@ end
             gun_firing = true
             gun_triggered = true
             gun_timer = shot_duration
-            local strength = 2
+            local strength = 5
             if face_left then
                 gun.recoil_x = strength 
             else
