@@ -165,553 +165,484 @@ function _draw()
     
 end
 
+--dialogue manager
+    function draw_npc_prompt()
+        local dx = x - (pondfather.x + 16)
+        local dy = y - (pondfather.y + 16)
+        local r = 16
 
-function draw_npc_prompt()
-    local dx = x - (pondfather.x + 16)
-    local dy = y - (pondfather.y + 16)
-    local r = 16
+        if (dx*dx + dy*dy < r*r and not dialogue.active) then
+            local prompt = "\f6❎\f7 talk"
+            local px = pondfather.x + 22 - (#prompt*2)//2
+            local py = pondfather.y - 10
 
-    if (dx*dx + dy*dy < r*r and not dialogue.active) then
-        local prompt = "\f6❎\f7 talk"
-        local px = pondfather.x + 22 - (#prompt*2)//2
-        local py = pondfather.y - 10
-
-        -- background box (optional)
-        --rectfill(px-2, py-2, px+#prompt*4, py+6, 0)
-        -- text
-        print(prompt, px, py, 7)
-    end
-end
-
-
-
-
-function start_dialogue(new_text)
-    dialogue.active = true
-    dialogue.text = new_text
-    dialogue.shown = ""
-    dialogue.index = 0
-    dialogue.delay = 0
-end
-
-function update_dialogue()
-    if dialogue.active then
-        dialogue.delay += 1
-        if dialogue.delay >= dialogue.speed and dialogue.index < #dialogue.text then
-            dialogue.index += 1
-            local raw = sub(dialogue.text, 1, dialogue.index)
-            dialogue.shown = wrap_text(raw, 28) -- wrap at ~28 characters per line
-            dialogue.delay = 0
-
-            -- play sound for visible characters
-            local c = sub(dialogue.text, dialogue.index, dialogue.index)
-            if (c != " " and dialogue.index % 2 == 0) then
-                --sfx(08, 3, rnd(32), 3) -- random pitch offset
-                sfx(08) 
-            end
-        end
-
-        -- advance dialogue when finished
-        if (btnp(4) or btnp(5)) and dialogue.index >= #dialogue.text then
-            dialogue.active = false
+            -- background box (optional)
+            --rectfill(px-2, py-2, px+#prompt*4, py+6, 0)
+            -- text
+            print(prompt, px, py, 7)
         end
     end
-end
-
-function draw_dialogue()
-    if dialogue.active then
-        -- textbox background
-        rectfill(cam_x + 4, cam_y + dialogue.box_y, cam_x + 123, cam_y + dialogue.box_y + 23, 0)
-        rect(cam_x + 4, cam_y + dialogue.box_y, cam_x + 123, cam_y + dialogue.box_y + 23, 7)
-        -- text
-        print(dialogue.shown, cam_x + 8, cam_y + dialogue.box_y + 6, 7)
+    function start_dialogue(new_text)
+        dialogue.active = true
+        dialogue.text = new_text
+        dialogue.shown = ""
+        dialogue.index = 0
+        dialogue.delay = 0
     end
-end
-function wrap_text(txt, limit)
-    local out = ""
-    local line = ""
-    for word in all(split(txt, " ")) do
-        if (#line + #word + 1 <= limit) then
-            line ..= word .. " "
-        else
-            out ..= line .. "\n"
-            line = word .. " "
-        end
-    end
-    out ..= line
-    return out
-end
+    function update_dialogue()
+        if dialogue.active then
+            dialogue.delay += 1
+            if dialogue.delay >= dialogue.speed and dialogue.index < #dialogue.text then
+                dialogue.index += 1
+                local raw = sub(dialogue.text, 1, dialogue.index)
+                dialogue.shown = wrap_text(raw, 28) -- wrap at ~28 characters per line
+                dialogue.delay = 0
 
-
-
-
-function show_debug()
-    for i = 1, #debug_lines do
-        print(debug_lines[i], cam_x + 5, cam_y + (i-1)*8, 14)
-    end
-end
-
-function add_debug_line(str)
-    local i = #debug_lines + 1
-    for i = 1, #debug_lines do
-        if debug_lines[i] ~= str then debug_lines[i] = str end
-    end
-    if #debug_lines == 0 then debug_lines[i] = str end
-end
-
-function create_enemy(x,y,color)
-    local sprite = nil
-    if color == "blue" then sprite = blue_fish end
-    if color == "green" then sprite = green_fish end
-    if color == "orange" then sprite = orange_fish end
-    if color == "red" then sprite = red_fish end
-    local i = #enemies+1
-    
-    
-    local enemy = {
-        sprite = sprite,
-        x = x,
-        y = y,
-        alive = true,
-        collected = false
-    }
-    enemies[#enemies + 1] = enemy
-end
-
-function collect_enemies()
-    for i = 1, #enemies do 
-        local enemy = enemies[i]
-        if enemy ~= nil then 
-            if not enemy.alive and is_in_range(enemy,16) and not enemy.collected then
-                move_toward_player(enemy)
-                if is_in_range(enemy, 1) then
-                    enemy.collected = true
+                -- play sound for visible characters
+                local c = sub(dialogue.text, dialogue.index, dialogue.index)
+                if (c != " " and dialogue.index % 2 == 0) then
+                    --sfx(08, 3, rnd(32), 3) -- random pitch offset
+                    sfx(08) 
                 end
             end
 
-            if enemy.collected then
-                add_to_picked_up(enemy)
-                del(enemies,enemy)
+            -- advance dialogue when finished
+            if (btnp(4) or btnp(5)) and dialogue.index >= #dialogue.text then
+                dialogue.active = false
             end
         end
     end
-end
-
-function move_toward_player(e)
-    local dx = x - e.x
-    local dy = y - e.y
-    local dist = sqrt(dx*dx + dy*dy)
-
-    if dist > 0 then
-        local speed = 1.5 
-        e.x += dx / dist * speed
-        e.y += dy / dist * speed
+    function draw_dialogue()
+        if dialogue.active then
+            -- textbox background
+            rectfill(cam_x + 4, cam_y + dialogue.box_y, cam_x + 123, cam_y + dialogue.box_y + 23, 0)
+            rect(cam_x + 4, cam_y + dialogue.box_y, cam_x + 123, cam_y + dialogue.box_y + 23, 7)
+            -- text
+            print(dialogue.shown, cam_x + 8, cam_y + dialogue.box_y + 6, 7)
+        end
     end
-end
-
-function add_to_picked_up(fish)
-    local i = #picked_up_fish + 1
-    picked_up_fish[i] = fish
-end
-
-function draw_picked_up_fish()
-    for i = 1, #picked_up_fish do
-        local fish = picked_up_fish[i]
-        fish.x = cam_x + 10*i
-        fish.y = cam_y + 3
-        spr(fish.sprite,fish.x,fish.y)
-    end
-    add_debug_line("#fish " .. #picked_up_fish)
-end
-
-function is_in_range(enemy,radius)
-    --centered on enemy sprite
-    local ex = enemy.x + 4
-    local ey = enemy.y + 4
-    local dx = (x+4) - ex
-    local dy = (y+4) - ey
-
-    return (dx * dx + dy * dy) < (radius * radius)
-end
-
-function draw_enemies()
-    
-    local dead_y = flr(8*abs(sin(tick)))
-    
-    for i = 1, #enemies do 
-        local enemy = enemies[i]
-        if not enemy.alive then
-            if enemy.collected then
-                --spr(enemy.sprite,enemy.x,enemy.y)
+    function wrap_text(txt, limit)
+        local out = ""
+        local line = ""
+        for word in all(split(txt, " ")) do
+            if (#line + #word + 1 <= limit) then
+                line ..= word .. " "
             else
-                spr(enemy.sprite,enemy.x,enemy.y - dead_y)
-            end
-        else 
-            spr(enemy.sprite,enemy.x,enemy.y)
-        end
-    end
-    tick += 0.02
-end
-
-function get_collided_enemy()
-    for i = 1, #enemies do
-        local ex = enemies[i].x
-        local ey = enemies [i].y
-        if bx >= ex and bx <= ex+8 and by >= ey and by <= ey+8 then
-            enemies[i].alive = false
-            --return enemies[i]
-        else
-            --return nil
-        end
-    end
-end
-
-function check_fired_gun()
-    if not gun_firing and btnp(4) then
-        gun_firing = true
-        gun_triggered = true
-        gun_timer = shot_duration
-        local strength = 2
-        if face_left then
-            gun.recoil_x = strength 
-        else
-            gun.recoil_x = -strength 
-        end
-
-        gun.recoil_timer = gun.recoil_max
-        sfx(07)
-    else
-        gun_triggered = false
-    end
-
-    if gun_firing then gun_timer -= 1 end
-    if gun_timer <= 0 then gun_firing = false end
-end
-
-
-
-function update_gun()
-    if gun.recoil_timer > 0 then
-        gun.recoil_timer -= 1
-        gun.recoil_x *= 0.7
-
-        if gun.recoil_timer <= 0 then
-            gun.recoil_x = 0
-            --gun.triggered = false
-        end
-    end
-end
-
-function draw_reload()
-    if gun_firing then  
-        new_y = y
-        dy = old_y - new_y
-        ry += 9/shot_duration
-        if not face_left then
-            rectfill(x-4,ry - dy,x-3,y+8, 14)
-        else
-            rectfill(x+18,ry - dy,x+19,y+8, 14)
-        end
-    else
-        old_y = y
-        ry = y
-    end
-end
-
-function draw_bullet()
-    if gun_triggered then
-        if not face_left then
-            bx = x + 16
-            by = y + 5
-        else
-            bx = x -5
-            by = y + 5
-        end
-        b_dir = face_left
-    else
-        if not gun_firing then
-            bx = 0
-            by = 0
-        end
-    end
-
-    if bx ~= 0 and (bx < x + 64 and bx > x-64) then
-        rectfill(bx, by, bx, by, 7)
-        if not b_dir then bx += b_spd else bx -= b_spd end
-    end
-end
-
-function draw_gun_anim()
-    if gun_triggered then
-        gun_anim_counter = 60
-        start_anim = true
-        a_time = 0 --reset time
-        i = 1 --start with frame 1
-       
-    end
-    if start_anim then 
-        if #gun_frames > 1 then
-            a_time += 1
-            if a_time > 1 then
-                a_time = 0
-                i += 1
-            end
-            if i <= #gun_frames then
-                if not face_left then
-                    spr(gun_frames[i],x+13,y+2)
-                else
-                    spr(gun_frames[i],x-5,y+2,1,1,face_left)
-                end
-            else
-                start_anim = false
+                out ..= line .. "\n"
+                line = word .. " "
             end
         end
-    end  
-end
-
-function draw_chonky_duck()
-    local chonk = 128
-    palt(15,true)
-    palt(0,false)
-    spr(chonk,pondfather.x,pondfather.y,4,4)
-    palt(0, true)
-    palt(15,false)
-end
-
-function check_quack()
-    if btn(5) then
-        quack = true
-        sfx(02)
-    else
-        quack = false
+        out ..= line
+        return out
     end
-end
-
-function draw_duck_fishing(x,y)
-    local width = 4
-    local length = 13
-    local white = 160
-    local eye = 161
-    local beak = 162
-    local beak_closed = 164
-    local L_white = 176
-    local R_white = 177
-    y -= 8
-    for i = 1, length do
-        y += 8
-        for i = 1, width do
-            spr(white,x+(i-1)*8,y)
+--debugger
+    function show_debug()
+        for i = 1, #debug_lines do
+            print(debug_lines[i], cam_x + 5, cam_y + (i-1)*8, 14)
         end
     end
-    spr(L_white,x,y)
-    spr(eye, x+2*8,y)
-    spr(R_white, x+3*8,y)
-    if beak_open then
-        spr(beak,x+8,y+8,2,2)
-    else
-        spr(beak_closed,x+8,y+8,2,2)
-    end
-    
-end
-
-function draw_duck(x,y)
-    local run = 1
-    local idle = 2
-    local swim = 3
-    local status = 0
-
-    if not in_water() then
-        if walking then
-            status = run
-        else
-            status = idle
+    function add_debug_line(str)
+        local i = #debug_lines + 1
+        for i = 1, #debug_lines do
+            if debug_lines[i] ~= str then debug_lines[i] = str end
         end
-    else
-        status = swim
+        if #debug_lines == 0 then debug_lines[i] = str end
     end
 
-    local spd = player_status[status][2]
-    local frames = player_status[status][1]
-
-    spr(get_anim_frame(spd, frames),x,y,2,2,face_left)
-end
-
-function player_move() 
-    ix = 0
-    iy = 0
-  if btn(⬆️) then
-    walking = true
-    if not face_up then
-      face_up = true
-    else
-      iy -= 1
-      face_up = true
-    end
-  end
-  if btn(⬇️) then
-    walking = true
-    if face_up then 
-      face_up = false
-    else
-      iy += 1
-      face_up = false
-    end
-  		
-  end
-  if btn(➡️) then
-    walking = true
-  		ix += 1
-      face_left = false
-  end
-  if btn(⬅️) then
-    walking = true
-  		ix -= 1
-      face_left = true
-  end
-
-    --idling
-    if not (btn(⬆️) or btn(⬇️) or btn(➡️) or btn(⬅️)) then
-        walking = false
-    end
-
-    --adjust speed in water
-    if in_water() then
-        speed = 2
-    else
-        speed = 2
-    end
-
-    --world border top left
-        if x + ix*speed <= -6 then
-            x = -6
-        else
-            x += ix*speed
-        end
-        if y + iy*speed <= 0 then
-            y = 0
-        else
-            y += iy*speed
-        end
-end
-
-
-
-function get_anim_frame(spd, frames)
-    local i = flr(t()/spd) % #frames + 1
-    return frames[i]
-  end
-function cam_follow()
-    local target_x = x - 60  
-    local target_y = y - 60
-
-    if x < 60 then target_x = 0 end
-    if y < 60 then target_y = 0 end
+--enemy mechanics
+    function create_enemy(x,y,color)
+        local sprite = nil
+        if color == "blue" then sprite = blue_fish end
+        if color == "green" then sprite = green_fish end
+        if color == "orange" then sprite = orange_fish end
+        if color == "red" then sprite = red_fish end
+        local i = #enemies+1
         
-    cam_x += (target_x - cam_x) * 0.2
-    cam_y += (target_y - cam_y) * 0.2
-    camera(flr(cam_x),flr(cam_y))
-end
-
-function switch_fishing()
-    if btnp(4) then 
-        fishing = not fishing
-        if fishing then music(01) else music(-1) end
-    end
-end
-
-function fishing_movement()
-    if btn(⬆️) and fishing_y > -11*8 then fishing_y -= 3 end
-    if btn(⬇️) and fishing_y < 0 then fishing_y += 3 end
-
-    if btnp(⬆️) and fishing_y - 3 < -11*8 then sfx(04) end
-    if btnp(⬇️) and fishing_y + 3 > 0 then sfx(04) end
-end
- 
-function in_water()
-    local px = x+4
-    if face_left then px = x+12 end
-    local tile = mget(flr((px)/8),flr((y+7)/8))
-    return fget(tile,0)
-end
-
-
-function draw_title_screen()
-    title_x = 116*8
-    title_y = 19*8
-    title_w = 62
-    title_h = 17
-
-    sign_rect(title_x - 6, title_y - 5, title_w + 12, title_h + 10, 5, 6)
-    --sign rectangle
-    -- rrectfill(title_x - 6, title_y - 5, 
-    --             title_x + title_w + 12, 
-    --             title_y + title_h + 10,
-    --             5, {2,2,2,2})
-
-
-    --the pondfather himself
-    sspr(80,74,48,54,117*8,178)
-    --the pondfather title words
-    sspr(0,96,title_w,title_h,title_x,title_y)
-
-
-
-end
-
-function sign_rect(x, y, w, h, col1, col2)
-    x1 = x + w
-    y1 = y + h
-    --top sliver
-    rectfill(x+1,y,x1-1,y+1,col1)
-    --body rect
-    rectfill(x,y+1,x1,y1-1,col1)
-    --bottom sliver
-    rectfill(x+1,y+h,x1-1,y+1,col1)
-
-
-    -- inside rects
-    --top lines
-    --long
-    rectfill(x + 14, y + 2, x1 - 14, y + 2, col2)
-    --2 short
-    rectfill(x + 3, y + 2, x + 6, y + 2, col2)
-    rectfill(x1-6, y+2, x1-3, y + 2, col2)
-    --side lines
-    rectfill(x+2,y+3, x+2, y1-3, col2)
-    rectfill(x1-2,y+3, x1-2, y1-3, col2)
-
-    --bottom line
-    rectfill(x + 3, y1 - 2, x1 - 3, y1 - 2, col2)
-
-    --corner fills
-    rectfill(x+3,y+3,x+3,y+3,col2)
-    rectfill(x+3,y1-3,x+3,y1-3,col2)
-    rectfill(x1-3,y+3,x1-3,y+3,col2)
-    rectfill(x1-3,y1-3,x1-3,y1-3,col2)
-
-    --black holes at top
-    rectfill(x1-11, y+1, x1-9, y+2, 0)
-    rectfill(x+9, y+1, x+11, y+2, 0)
-
-
-end
-
-function draw_player_gun()
-    gun.y = y + 4
-    if not face_left then
-        if not gun_firing then gun.x = x + 5 end
-        sspr(gun.sprite_id,96,10,6,gun.x,gun.y)
-    else
-        if not gun_firing then gun.x = x + 1 end
-        sspr(gun.sprite_id,96,10,6,gun.x,gun.y,10,6,face_left)
+        
+        local enemy = {
+            sprite = sprite,
+            x = x,
+            y = y,
+            alive = true,
+            collected = false
+        }
+        enemies[#enemies + 1] = enemy
     end
 
-end
+    function draw_enemies()
+        
+        local dead_y = flr(8*abs(sin(tick)))
+        
+        for i = 1, #enemies do 
+            local enemy = enemies[i]
+            if not enemy.alive then
+                if enemy.collected then
+                    --spr(enemy.sprite,enemy.x,enemy.y)
+                else
+                    spr(enemy.sprite,enemy.x,enemy.y - dead_y)
+                end
+            else 
+                spr(enemy.sprite,enemy.x,enemy.y)
+            end
+        end
+        tick += 0.02
+    end
 
- 
+    function collect_enemies()
+        for i = 1, #enemies do 
+            local enemy = enemies[i]
+            if enemy ~= nil then 
+                if not enemy.alive and is_in_range(enemy,16) and not enemy.collected then
+                    move_toward_player(enemy)
+                    if is_in_range(enemy, 1) then
+                        enemy.collected = true
+                    end
+                end
+
+                if enemy.collected then
+                    add_to_picked_up(enemy)
+                    del(enemies,enemy)
+                end
+            end
+        end
+    end
+
+    function add_to_picked_up(fish)
+        local i = #picked_up_fish + 1
+        picked_up_fish[i] = fish
+    end
+
+    function draw_picked_up_fish()
+        for i = 1, #picked_up_fish do
+            local fish = picked_up_fish[i]
+            fish.x = cam_x + 10*i
+            fish.y = cam_y + 3
+            spr(fish.sprite,fish.x,fish.y)
+        end
+        add_debug_line("#fish " .. #picked_up_fish)
+    end
+
+    function is_in_range(enemy,radius)
+        --centered on enemy sprite
+        local ex = enemy.x + 4
+        local ey = enemy.y + 4
+        local dx = (x+4) - ex
+        local dy = (y+4) - ey
+
+        return (dx * dx + dy * dy) < (radius * radius)
+    end
+    function move_toward_player(e)
+        local dx = x - e.x
+        local dy = y - e.y
+        local dist = sqrt(dx*dx + dy*dy)
+
+        if dist > 0 then
+            local speed = 1.5 
+            e.x += dx / dist * speed
+            e.y += dy / dist * speed
+        end
+    end
+    function get_collided_enemy()
+        for i = 1, #enemies do
+            local ex = enemies[i].x
+            local ey = enemies [i].y
+            if bx >= ex and bx <= ex+8 and by >= ey and by <= ey+8 then
+                enemies[i].alive = false
+                --return enemies[i]
+            else
+                --return nil
+            end
+        end
+    end
+
+--gun mechanics
+    function update_gun()
+        if gun.recoil_timer > 0 then
+            gun.recoil_timer -= 1
+            gun.recoil_x *= 0.7
+
+            if gun.recoil_timer <= 0 then
+                gun.recoil_x = 0
+                gun.triggered = false
+            end
+        end
+    end
+    function check_fired_gun()
+        if not gun_firing and btnp(4) then
+            gun_firing = true
+            gun_triggered = true
+            gun_timer = shot_duration
+            local strength = 2
+            if face_left then
+                gun.recoil_x = strength 
+            else
+                gun.recoil_x = -strength 
+            end
+
+            gun.recoil_timer = gun.recoil_max
+            sfx(07)
+        else
+            gun_triggered = false
+        end
+
+        if gun_firing then gun_timer -= 1 end
+        if gun_timer <= 0 then gun_firing = false end
+    end
+
+    function draw_reload()
+        if gun_firing then  
+            new_y = y
+            dy = old_y - new_y
+            ry += 9/shot_duration
+            if not face_left then
+                rectfill(x-4,ry - dy,x-3,y+8, 14)
+            else
+                rectfill(x+18,ry - dy,x+19,y+8, 14)
+            end
+        else
+            old_y = y
+            ry = y
+        end
+    end
+
+    function draw_bullet()
+        if gun_triggered then
+            if not face_left then
+                bx = x + 16
+                by = y + 5
+            else
+                bx = x -5
+                by = y + 5
+            end
+            b_dir = face_left
+        else
+            if not gun_firing then
+                bx = 0
+                by = 0
+            end
+        end
+
+        if bx ~= 0 and (bx < x + 64 and bx > x-64) then
+            rectfill(bx, by, bx, by, 7)
+            if not b_dir then bx += b_spd else bx -= b_spd end
+        end
+    end
+
+    function draw_gun_anim()
+        if gun_triggered then
+            gun_anim_counter = 60
+            start_anim = true
+            a_time = 0 --reset time
+            i = 1 --start with frame 1
+        
+        end
+        if start_anim then 
+            if #gun_frames > 1 then
+                a_time += 1
+                if a_time > 1 then
+                    a_time = 0
+                    i += 1
+                end
+                if i <= #gun_frames then
+                    if not face_left then
+                        spr(gun_frames[i],x+13,y+2)
+                    else
+                        spr(gun_frames[i],x-5,y+2,1,1,face_left)
+                    end
+                else
+                    start_anim = false
+                end
+            end
+        end  
+    end
+
+    function draw_player_gun()
+        gun.y = y + 4
+        if not face_left then
+            if not gun_firing then gun.x = x + 5 end
+            sspr(gun.sprite_id,96,10,6,gun.x,gun.y)
+        else
+            if not gun_firing then gun.x = x + 1 end
+            sspr(gun.sprite_id,96,10,6,gun.x,gun.y,10,6,face_left)
+        end
+    
+    end
+
+--pondfather 
+
+    function draw_chonky_duck()
+        local chonk = 128
+        palt(15,true)
+        palt(0,false)
+        spr(chonk,pondfather.x,pondfather.y,4,4)
+        palt(0, true)
+        palt(15,false)
+    end
+
+--duck friend
+    function draw_duck(x,y)
+        local run = 1
+        local idle = 2
+        local swim = 3
+        local status = 0
+
+        if not in_water() then
+            if walking then
+                status = run
+            else
+                status = idle
+            end
+        else
+            status = swim
+        end
+
+        local spd = player_status[status][2]
+        local frames = player_status[status][1]
+
+        spr(get_anim_frame(spd, frames),x,y,2,2,face_left)
+    end
+    function player_move() 
+        ix = 0
+        iy = 0
+        if btn(⬆️) then
+            walking = true
+            if not face_up then
+            face_up = true
+            else
+            iy -= 1
+            face_up = true
+            end
+        end
+        if btn(⬇️) then
+            walking = true
+            if face_up then 
+            face_up = false
+            else
+            iy += 1
+            face_up = false
+            end
+                
+        end
+        if btn(➡️) then
+            walking = true
+                ix += 1
+            face_left = false
+        end
+        if btn(⬅️) then
+            walking = true
+                ix -= 1
+            face_left = true
+        end
+
+        --idling
+        if not (btn(⬆️) or btn(⬇️) or btn(➡️) or btn(⬅️)) then
+            walking = false
+        end
+
+        --adjust speed in water
+        if in_water() then
+            speed = 2
+        else
+            speed = 2
+        end
+
+        --world border top left
+            if x + ix*speed <= -6 then
+                x = -6
+            else
+                x += ix*speed
+            end
+            if y + iy*speed <= 0 then
+                y = 0
+            else
+                y += iy*speed
+            end
+    end
+    function cam_follow()
+        local target_x = x - 60  
+        local target_y = y - 60
+
+        if x < 60 then target_x = 0 end
+        if y < 60 then target_y = 0 end
+            
+        cam_x += (target_x - cam_x) * 0.2
+        cam_y += (target_y - cam_y) * 0.2
+        camera(flr(cam_x),flr(cam_y))
+    end
+    function in_water()
+        local px = x+4
+        if face_left then px = x+12 end
+        local tile = mget(flr((px)/8),flr((y+7)/8))
+        return fget(tile,0)
+    end
+
+--animation manager
+    function get_anim_frame(spd, frames)
+        local i = flr(t()/spd) % #frames + 1
+        return frames[i]
+    end
+
+--title screen
+    function draw_title_screen()
+        title_x = 116*8
+        title_y = 19*8
+        title_w = 62
+        title_h = 17
+
+        sign_rect(title_x - 6, title_y - 5, title_w + 12, title_h + 10, 5, 6)
+        --sign rectangle
+        -- rrectfill(title_x - 6, title_y - 5, 
+        --             title_x + title_w + 12, 
+        --             title_y + title_h + 10,
+        --             5, {2,2,2,2})
+
+
+        --the pondfather himself
+        sspr(80,74,48,54,117*8,178)
+        --the pondfather title words
+        sspr(0,96,title_w,title_h,title_x,title_y)
 
 
 
+    end
+
+    function sign_rect(x, y, w, h, col1, col2)
+        x1 = x + w
+        y1 = y + h
+        --top sliver
+        rectfill(x+1,y,x1-1,y+1,col1)
+        --body rect
+        rectfill(x,y+1,x1,y1-1,col1)
+        --bottom sliver
+        rectfill(x+1,y+h,x1-1,y+1,col1)
+
+
+        -- inside rects
+        --top lines
+        --long
+        rectfill(x + 14, y + 2, x1 - 14, y + 2, col2)
+        --2 short
+        rectfill(x + 3, y + 2, x + 6, y + 2, col2)
+        rectfill(x1-6, y+2, x1-3, y + 2, col2)
+        --side lines
+        rectfill(x+2,y+3, x+2, y1-3, col2)
+        rectfill(x1-2,y+3, x1-2, y1-3, col2)
+
+        --bottom line
+        rectfill(x + 3, y1 - 2, x1 - 3, y1 - 2, col2)
+
+        --corner fills
+        rectfill(x+3,y+3,x+3,y+3,col2)
+        rectfill(x+3,y1-3,x+3,y1-3,col2)
+        rectfill(x1-3,y+3,x1-3,y+3,col2)
+        rectfill(x1-3,y1-3,x1-3,y1-3,col2)
+
+        --black holes at top
+        rectfill(x1-11, y+1, x1-9, y+2, 0)
+        rectfill(x+9, y+1, x+11, y+2, 0)
+
+
+    end
 
 
 
