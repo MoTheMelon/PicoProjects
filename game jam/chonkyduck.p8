@@ -5,6 +5,8 @@ function _init()
     x = 6*8
     y = 6*8
 
+    
+
     bx = 0
     by = 0
 
@@ -13,21 +15,26 @@ function _init()
     tick = 0 
     game_mode = "playing"
 
-    blue_fish = 11
-    green_fish = 12
-    orange_fish = 13
-    red_fish = 14
+    fish_types = {}
+
+    create_fish_type("blue",11)
+    create_fish_type("green",12)
+    create_fish_type("orange",13)
+    create_fish_type("red",14)
 
     enemies = {}
 
     create_enemy(100,100,"blue")
     create_enemy(100,50,"orange")
     create_enemy(80,80,"red")
+    create_enemy(120,90,"green")
 
     pondfather = {
         x = 20,
         y = 20
     }
+
+    target_fish = {}
 
     gun = {
         x = 64,
@@ -99,39 +106,35 @@ function _init()
 
     shot_duration = 60
     gun_timer = 0
+    has_target = false
 
 end
 
 function _update()
+    
     if game_mode == "title" then 
         camera(112*8, 16*8)
         --if btnp(5) then game_mode = "playing" end
         
     else
         --if btnp(5) then game_mode = "title" end
-        if fishing then
-            fishing_movement()
-        else
-            player_move()
-            --check_quack()
-            check_fired_gun()
-            get_collided_enemy()
-            collect_enemies()
-        end
+        player_move()
+        --check_quack()
+        check_fired_gun()
+        get_collided_enemy()
+        collect_enemies()
     end
     update_dialogue()
+    pondfather_dialogue()
 
     -- if (btnp(5) and not dialogue.active) then
     --     start_dialogue("hello, traveler. beware the pondfather...")
     -- end
-    if (btnp(5) and not dialogue.active) then
-        local dx = x - (pondfather.x + 16)
-        local dy = y - (pondfather.y + 16)
-        if (dx*dx + dy*dy < 16*16) then
-            start_dialogue("greetings, child... the pondfather watches.")
-        end
-    end
+    
 
+    if not has_target then
+        determine_target()
+    end
     update_gun()
 
 end
@@ -139,25 +142,21 @@ end
 function _draw()
     cls()
     map()
-    --show_debug()
+    show_debug()
     if game_mode == "title" then
         draw_title_screen()
     else
-        if fishing then 
-            camera(112*8,0)
-            draw_duck_fishing(118*8,fishing_y)
-        else
-            draw_chonky_duck()
-            draw_duck(x,y)
-            draw_enemies()
-            draw_player_gun()
-            draw_gun_anim()
-            draw_bullet()
-            draw_reload()
-            cam_follow()
-            
-            draw_picked_up_fish()
-        end
+        draw_chonky_duck()
+        draw_duck(x,y)
+        draw_enemies()
+        draw_player_gun()
+        draw_gun_anim()
+        draw_bullet()
+        draw_reload()
+        cam_follow()
+        
+        draw_picked_up_fish()
+        display_target()
     end
     draw_npc_prompt()
     draw_dialogue()
@@ -252,12 +251,14 @@ end
 --enemy mechanics
     function create_enemy(x,y,color)
         local sprite = nil
-        if color == "blue" then sprite = blue_fish end
-        if color == "green" then sprite = green_fish end
-        if color == "orange" then sprite = orange_fish end
-        if color == "red" then sprite = red_fish end
-        local i = #enemies+1
         
+        for i = 1, #fish_types do
+            if color == fish_types[i].color then
+                sprite = fish_types[i].sprite_id
+            end
+        end
+
+        local i = #enemies+1
         
         local enemy = {
             sprite = sprite,
@@ -267,6 +268,13 @@ end
             collected = false
         }
         enemies[#enemies + 1] = enemy
+    end
+    function create_fish_type(color,sprite_id)
+        type = {
+            color = color,
+            sprite_id = sprite_id
+        }
+        fish_types[#fish_types+1] = type
     end
 
     function draw_enemies()
@@ -319,7 +327,7 @@ end
             fish.y = cam_y + 3
             spr(fish.sprite,fish.x,fish.y)
         end
-        add_debug_line("#fish " .. #picked_up_fish)
+        --add_debug_line("#fish " .. #picked_up_fish)
     end
 
     function is_in_range(enemy,radius)
@@ -404,6 +412,17 @@ end
             ry = y
         end
     end
+    function draw_player_gun()
+        gun.y = y + 4
+        if not face_left then
+            if not gun_firing then gun.x = x + 5 end
+            sspr(gun.sprite_id,96,10,6,gun.x,gun.y)
+        else
+            if not gun_firing then gun.x = x + 1 end
+            sspr(gun.sprite_id,96,10,6,gun.x,gun.y,10,6,face_left)
+        end
+    
+    end
 
     function draw_bullet()
         if gun_triggered then
@@ -456,18 +475,6 @@ end
         end  
     end
 
-    function draw_player_gun()
-        gun.y = y + 4
-        if not face_left then
-            if not gun_firing then gun.x = x + 5 end
-            sspr(gun.sprite_id,96,10,6,gun.x,gun.y)
-        else
-            if not gun_firing then gun.x = x + 1 end
-            sspr(gun.sprite_id,96,10,6,gun.x,gun.y,10,6,face_left)
-        end
-    
-    end
-
 --pondfather 
 
     function draw_chonky_duck()
@@ -477,6 +484,67 @@ end
         spr(chonk,pondfather.x,pondfather.y,4,4)
         palt(0, true)
         palt(15,false)
+    end
+    function determine_target()
+        rdm = flr(rnd(#fish_types))+1
+        --target_fish[1] = fish_types[rdm]
+        target_fish[1] = fish_types[rdm]
+        has_target = true
+        
+    end
+    function display_target()
+        x1 = cam_x + 128-16
+        y1 = cam_y + 2
+        x2 = cam_x + 128-3
+        y2 = cam_y + 2 + 12
+
+        rectfill(x1, y1, x2, y2, 0)
+        rect(x1,y1, x2, y2, 8)
+        if #target_fish ~= 0 then
+            for i = 1, #target_fish do
+                spr(target_fish[i].sprite_id,cam_x + 128-13, cam_y + 5)
+            end
+        end
+    end
+    function duck_collected_target()
+        local got_target = false
+        for i = 1, #picked_up_fish do 
+            if picked_up_fish[i].color == target_fish[1].color then
+                got_target = true
+            end
+        end
+        return got_target
+    end
+    function remove_collected_fish()
+        for i = 1, #picked_up_fish do 
+            if picked_up_fish[i].color == target_fish[1].color then
+                picked_up_fish[i] = nil
+            end
+        end
+    end
+    function pondfather_dialogue()
+        if (btnp(5) and not dialogue.active) then
+            local dx = x - (pondfather.x + 16)
+            local dy = y - (pondfather.y + 16)
+            if (dx*dx + dy*dy < 16*16) then
+                --close enough to duck so do the right dialogue
+                    add_debug_line(tostr(duck_collected_target()))
+                if duck_collected_target() then
+                    start_dialogue("excellent work, child.")
+                    start_dialogue("another has wronged me. bring him to me.")
+                    remove_collected_fish()
+                else
+                    start_dialogue("greetings, child... the pondfather watches.")
+                end
+
+
+
+
+
+
+               
+            end
+        end
     end
 
 --duck friend
